@@ -11,6 +11,7 @@ use pocketmine\event\block\BlockBreakEvent;
 use pocketmine\event\block\BlockPlaceEvent;
 use pocketmine\event\entity\EntityDamageEvent;
 use pocketmine\event\entity\EntityDamageByEntityEvent;
+use pocketmine\event\entity\EntityExplodeEvent;
 use pocketmine\event\Listener;
 use pocketmine\level\Position;
 use pocketmine\math\Vector3;
@@ -45,6 +46,8 @@ class Main extends PluginBase implements Listener{
 	private $edit = false;
 	/** @var bool */
 	private $touch = false;
+	/** @var bool */
+	private $tnt = false;
 	/** @var bool */
 	private $effects = false;
 	/** @var bool */
@@ -120,6 +123,10 @@ class Main extends PluginBase implements Listener{
 				$flags["drop"] = false;
 				$newchange['Drop'] = "! Area Drop flag missing, now updated to 'false'; please see /resources/config.yml";
 			}
+			if( !isset($datum["flags"]["tnt"]) ){
+				$flags["tnt"] = false;
+				$newchange['TNT'] = "! Area tnt flag missing, now updated to 'false'; please see /resources/config.yml";
+			}
             //new flags v 1.0.5-12
 			if( !isset($datum["flags"]["effects"]) ){
 				$flags["effects"] = false;
@@ -193,6 +200,9 @@ class Main extends PluginBase implements Listener{
 		if(!isset($c["Default"]["Drop"])) {
 			$c["Default"]["Drop"] = false;
 		}
+		if(!isset($c["Default"]["TNT"])) {
+			$c["Default"]["TNT"] = false;
+		}
 		// new in v1.0.5-12
 		if(!isset($c["Default"]["Effects"])) {
 			$c["Default"]["Effects"] = false;
@@ -215,6 +225,7 @@ class Main extends PluginBase implements Listener{
 		// new in v1.0.4-11
 		$this->perms = $c["Default"]["Perms"];
 		$this->drop = $c["Default"]["Drop"];
+		$this->tnt  = $c["Default"]["TNT"];
         // new in v1.0.5-12
 		$this->effects = $c["Default"]["Effects"];
         $this->flagset = $c['Default']; 
@@ -241,6 +252,9 @@ class Main extends PluginBase implements Listener{
 				}
 				if( !isset($flags["Drop"]) ){
 					$flags["Drop"] = $this->drop;
+				}
+				if( !isset($flags["TNT"]) ){
+					$flags["TNT"] = $this->tnt;
 				}
                 // new v1.0.5-12
 				if( !isset($flags["Effects"]) ){
@@ -292,6 +306,7 @@ class Main extends PluginBase implements Listener{
             "touch","interact",
             "effects","magic","effect",
             "drop",
+			"tnt","explosion",
             "msg","message",
             "passage","pass","barrier",
             "perms","perm"
@@ -396,7 +411,7 @@ class Main extends PluginBase implements Listener{
                                 new Area(
                                     strtolower($args[1]),
                                     "",
-                                    ["edit" => $flags['Edit'], "god" => $flags['God'], "pvp" => $flags["PVP"], "flight"=> $flags["Flight"], "touch" => $flags['Touch'], "effects" => $flags['Effects'], "drop" => $flags['Drop'], "msg" => $flags['Msg'], "passage" => $flags['Passage'], "perms" => $flags['Perms']],
+                                    ["edit" => $flags['Edit'], "god" => $flags['God'], "pvp" => $flags["PVP"], "flight"=> $flags["Flight"], "touch" => $flags['Touch'], "effects" => $flags['Effects'], "drop" => $flags['Drop'], "tnt" => $flags['TNT'], "msg" => $flags['Msg'], "passage" => $flags['Passage'], "perms" => $flags['Perms']],
                                     $this->firstPosition[$playerName],
                                     $this->secondPosition[$playerName],
                                     $sender->getLevel()->getName(),
@@ -638,10 +653,10 @@ class Main extends PluginBase implements Listener{
 										}
 										$o = TextFormat::GREEN . "Flag " . $flag . " set to " . $status . " for area " . $area->getName() . "!";
 									}else{
-										$o = TextFormat::RED . "Flag not found. (Flags: edit, god, pvp, flight, touch, effects, msg, passage, perms, drop)";
+										$o = TextFormat::RED . "Flag not found. (Flags: edit, god, pvp, flight, touch, effects, msg, passage, perms, drop, tnt)";
 									}
 								}else{
-									$o = TextFormat::RED . "Please specify a flag. (Flags: edit, god, pvp, flight, touch, effects, msg, passage, perms, drop)";
+									$o = TextFormat::RED . "Please specify a flag. (Flags: edit, god, pvp, flight, touch, effects, msg, passage, perms, drop, tnt)";
 								}
 							}
 						}else{
@@ -1160,8 +1175,22 @@ class Main extends PluginBase implements Listener{
 		}
 		return $o;
 	}
-
-
+    /* Handles TNT flag */
+    
+    /**
+     * OnEntityExplode()
+     *
+     * EntityExplodeEvent
+     *
+     * @param EntityExplodeEvent $event
+     *
+     * @return void
+     */
+    public function onEntityExplode(EntityExplodeEvent $event){
+        if (!$this->canExplode($event->getPosition(), $event->getEntity()->getLevel())) {
+            $event->setCancelled();
+        }
+    }
 	/** Block Place
 	 * @param BlockPlaceEvent $event
 	 * @ignoreCancelled true
@@ -1731,4 +1760,38 @@ class Main extends PluginBase implements Listener{
 		file_put_contents($this->getDataFolder() . "areas.json", json_encode($areas));
 	}
 
+	}
+/**
+     * canExplode()
+     *
+     * @api
+     *
+     * Checks if entity can explode on given position
+     *
+     * @param pocketmine\level\Position $pos
+     * @param pocketmine\level\Level $level
+     *
+     * @return bool
+     */
+    public function canExplode(Position $pos, Level $level): bool{
+        $o = true;
+        $g = (isset($this->levels[$level->getName()]) ? $this->levels[$level->getName()]["TNT"] : $this->tnt);
+        if ($g) {
+            $o = false;
+        }
+        foreach ($this->areas as $area) {
+            if ($area->contains(new Vector3($pos->getX(), $pos->getY(), $pos->getZ()), $level->getName())) {
+                if ($area->getFlag("tnt")) {
+                    $o = false;
+                    break;
+                }
+                if ($area->getFlag("tnt") && $g) {
+                    $o = true;
+                    break;
+                }
+            }
+        }
+        return $o;
+    }
+    
 }
