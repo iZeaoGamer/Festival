@@ -1760,8 +1760,6 @@ class Main extends PluginBase implements Listener{
 		}
 		file_put_contents($this->getDataFolder() . "areas.json", json_encode($areas));
 	}
-
-	}
 /**
      * canExplode()
      *
