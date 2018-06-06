@@ -41,6 +41,9 @@ Default:
 
   # Prevent players drop items in the area? Deny drop
   Drop: false
+  
+  # Prevent explosions in the area? Enable the TNT flag.
+  TNT: false
 
   # Player permission overwrite for area event command execution
   Perms: false
@@ -76,6 +79,9 @@ Worlds:
 
     # Prevent players drop items in the area? Deny drop
     Drop: false
+	
+	# Prevent explosions in the area? Enable the TNT flag.
+  	TNT: false
 
     # Player permission overwrite for area event command execution
     Perms: false
@@ -108,6 +114,9 @@ Worlds:
 
     # Prevent players drop items in the area? Deny drop
     Drop: false
- 
+    
+	# Prevent explosions in the area? Enable the TNT flag.
+    TNT: false
+	
     # Player permission overwrite for area event command execution
     Perms: false
