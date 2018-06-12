@@ -369,31 +369,31 @@ class Main extends PluginBase implements Listener{
 		$o = "";
 		switch($action){
 			case "pos1":
-				if($sender->hasPermission("festival") || $sender->hasPermission("festival.command") || $sender->hasPermission("festival.command.fe") || $sender->hasPermission("festival.command.fe.pos1")){
+				if($sender->isOp()) {
 					if(isset($this->selectingFirst[$playerName]) || isset($this->selectingSecond[$playerName])){
-						$o = TextFormat::RED . "You're already selecting a position!";
+						$o = TextFormat::RED . "§5You're already selecting a position!";
 					}else{
 						$this->selectingFirst[$playerName] = true;
-						$o = TextFormat::GREEN . "Please place or break the first position.";
+						$o = TextFormat::GREEN . "§6Please place or break the first position.";
 					}
 				}else{
-					$o = TextFormat::RED . "You do not have permission to use this subcommand.";
+					$o = TextFormat::RED . "§2You must be OP to run this command..";
 				}
 			break;
 			case "pos2":
-				if($sender->hasPermission("festival") || $sender->hasPermission("festival.command") || $sender->hasPermission("festival.command.fe") || $sender->hasPermission("festival.command.fe.pos2")){
+				if($sender->isOp()) {
 					if(isset($this->selectingFirst[$playerName]) || isset($this->selectingSecond[$playerName])){
-						$o = TextFormat::RED . "You're already selecting a position!";
+						$o = TextFormat::RED . "§5You're already selecting a position!";
 					}else{
 						$this->selectingSecond[$playerName] = true;
-						$o = TextFormat::GREEN . "Please place or break the second position.";
+						$o = TextFormat::GREEN . "§6Please place or break the second position.";
 					}
 				}else{
-					$o = TextFormat::RED . "You do not have permission to use this subcommand.";
+					$o = TextFormat::RED . "§2You must be OP to run this command.";
 				}
 			break;
 			case "create":
-				if($sender->hasPermission("festival") || $sender->hasPermission("festival.command") || $sender->hasPermission("festival.command.area") || $sender->hasPermission("festival.command.fe.create")){
+				if($sender->isOp()) {
 					if(isset($args[1])){
 						if(isset($this->firstPosition[$playerName], $this->secondPosition[$playerName])){
 							if(!isset($this->areas[strtolower($args[1])])){
@@ -425,22 +425,22 @@ class Main extends PluginBase implements Listener{
 
 								$this->saveAreas();
 								unset($this->firstPosition[$playerName], $this->secondPosition[$playerName]);
-								$o = TextFormat::AQUA . "Area created!";
+								$o = TextFormat::AQUA . "§dThe arena named §5$args[1] §dArea created!";
 							}else{
-								$o = TextFormat::RED . "An area with that name already exists.";
+								$o = TextFormat::RED . "§cThe arena named §a$args[1] §calready exists.";
 							}
 						}else{
-							$o = TextFormat::RED . "Please select both positions first.";
+							$o = TextFormat::RED . "§5Please select both positions first.";
 						}
 					}else{
-						$o = TextFormat::RED . "Please specify a name for this area.";
+						$o = TextFormat::RED . "§5Please specify a name for this area.";
 					}
 				}else{
-					$o = TextFormat::RED . "You do not have permission to use this subcommand.";
+					$o = TextFormat::RED . "§cYou do not have permission to use this subcommand.";
 				}
 			break;
 			case "desc":
-				if($sender->hasPermission("festival") || $sender->hasPermission("festival.command") || $sender->hasPermission("festival.command.fe") || $sender->hasPermission("festival.command.fe.desc")){
+				if($sender->isOp()) {
 					if(isset($args[1])){
 						if(isset($this->areas[strtolower($args[1])])){
 							if(isset($args[2])){
@@ -451,22 +451,22 @@ class Main extends PluginBase implements Listener{
 								$area = $this->areas[strtolower($ar)];
 								$area->desc = $desc;
 								$this->saveAreas();
-								$o = TextFormat::GREEN . "Area ". TextFormat::LIGHT_PURPLE . $area->getName() . TextFormat::GREEN . " description saved";
+								$o = TextFormat::GREEN . "§dArea §5" . $area->getName() . TextFormat::GREEN . " §ddescription saved";
 							}else{
-								$o = TextFormat::RED . "Please write the description. Usage /fe desc <areaname> <..>";
+								$o = TextFormat::RED . "§5Please write the description. Use /fe desc <areaname> <..>";
 							}
 						}else{
-							$o = TextFormat::RED . "Area does not exist.";
+							$o = TextFormat::RED . "§5Area does not exist.";
 						}
 					}else{
-						$o = TextFormat::RED . "Please specify an area to edit the description. Usage: /fe desc <areaname> <desc>";
+						$o = TextFormat::RED . "§5Please specify an area to edit the description. Usage: /fe desc <areaname> <desc>";
 					}
 				}else{  
-					$o = TextFormat::RED . "You do not have permission to use this subcommand.";
+					$o = TextFormat::RED . "§2You do not have permission to use this subcommand.";
 				}
 			break;
 			case "list":
-				if( $sender->hasPermission("festival") || $sender->hasPermission("festival.command") || $sender->hasPermission("festival.command.fe") || $sender->hasPermission("festival.command.fe.list")){
+				if($sender->isOp()) {
 					$lvls = $this->getServer()->getLevels();
 					$o = '';
 					$l = '';
@@ -487,7 +487,7 @@ class Main extends PluginBase implements Listener{
 							}
 						}
 						if( $i > 0 ){
-							$o .= TextFormat::DARK_PURPLE ."---- Area list ----\n";
+							$o .= TextFormat::DARK_PURPLE ."§a---- Area list ----\n";
 							$o .= TextFormat::GRAY . "level " . TextFormat::YELLOW . $lvl->getName() .":\n". $t;
 						}
 					}
@@ -496,29 +496,29 @@ class Main extends PluginBase implements Listener{
 					}
 
 					if($o == ''){
-						$o = "There are no areas that you can edit";
+						$o = "§5There are no areas that you can edit";
 					}
 				}
             break;
 			case "here":
-				if($sender->hasPermission("festival") || $sender->hasPermission("festival.command") || $sender->hasPermission("festival.command.fe") || $sender->hasPermission("festival.command.fe.here")){
+				if($sender->isOp()) {
 					$o = "";
 					foreach($this->areas as $area){
 
 						if($area->contains($sender->getPosition(), $sender->getLevel()->getName()) && $area->getWhitelist() !== null){
-							$o .= TextFormat::DARK_PURPLE ."---- Area here ----\n";
+							$o .= TextFormat::DARK_PURPLE ."§a---- Area here ----\n";
 							$o .= $this->areaInfoList( $area );
-							$o .= TextFormat::DARK_PURPLE ."----------------\n";
+							$o .= TextFormat::DARK_PURPLE ."§a----------------\n";
 						}
 					}
 					if($o === "") {
-						$o = TextFormat::RED . "You are in an unknown area";
+						$o = TextFormat::RED . "§6You are in an unknown area";
 					}
 				}
 			break;
 			case "tp":
 				if (!isset($args[1])){
-					$o = TextFormat::RED . "You must specify an existing Area name";
+					$o = TextFormat::RED . "§5You must specify an existing Area name";
 					break;
 				}
 				if( isset( $this->areas[strtolower($args[1])] ) ){
@@ -529,11 +529,11 @@ class Main extends PluginBase implements Listener{
 
                     $perms = (isset($this->levels[$position->getLevel()->getName()]) ? $this->levels[ $position->getLevel()->getName() ]["Perms"] : $this->perms);
 
-                    if( $perms || $area->isWhitelisted($playerName) || $sender->hasPermission("festival") || $sender->hasPermission("festival.command") || $sender->hasPermission("festival.command.fe") || $sender->hasPermission("festival.command.fe.tp")){
+                    if( $perms || $area->isWhitelisted($playerName) {
 
                         $levelName = $area->getLevelName();
                         if(isset($levelName) && Server::getInstance()->loadLevel($levelName) != false){
-                                $o = TextFormat::GREEN . "You are teleporting to Area " . $args[1];
+                                $o = TextFormat::GREEN . "§dYou are teleporting to Area " . $args[1];
                                 $cx = $area->getSecondPosition()->getX() + ( ( $area->getFirstPosition()->getX() - $area->getSecondPosition()->getX() ) / 2 );
                                 $cz = $area->getSecondPosition()->getZ() + ( ( $area->getFirstPosition()->getZ() - $area->getSecondPosition()->getZ() ) / 2 );
                                 $cy1 = min( $area->getSecondPosition()->getY(), $area->getFirstPosition()->getY());
@@ -544,14 +544,14 @@ class Main extends PluginBase implements Listener{
                                $sender->teleport( new Position( $cx, $cy2+ 0.5, $cz, $area->getLevel() ) );
 
                         }else{
-                            $o = TextFormat::RED . "The level " . $levelName . " for Area ". $args[1] ." cannot be found";
+                            $o = TextFormat::RED . "§5The level §6" . $levelName . " §5for Area §6". $args[1] ." §5cannot be found";
                         }
                     }else{
-                        $o = TextFormat::RED . "You do not have permission to use this subcommand.";
+                        $o = TextFormat::RED . "§2You do not have permission to use this subcommand.";
                     }
                 }else{
                     $list = $this->listAllAreas();
-                    $o = TextFormat::RED . "The Area " . $args[1] . " could not be found. ". $list;
+                    $o = TextFormat::RED . "§5The Area §6" . $args[1] . " §5could not be found. ". $list;
                 }
 			break;
 			case "f":
@@ -571,7 +571,7 @@ class Main extends PluginBase implements Listener{
 			case "perm":
 			case "perms":
 			case "drop":
-				if($sender->hasPermission("festival") || $sender->hasPermission("festival.command") || $sender->hasPermission("festival.command.fe") || $sender->hasPermission("festival.command.fe.flag")){
+				if($sender->isOp()) {
 					if(isset($args[1])){
                         
 						/**
@@ -617,7 +617,7 @@ class Main extends PluginBase implements Listener{
 								}else{
 									$status = "off"; 
 								}
-								$o = TextFormat::GREEN . "Flag " . $flag . " set to " . $status . " for area " . $area->getName() . "!";
+								$o = TextFormat::GREEN . "§dFlag §5" . $flag . " §dset to §5" . $status . " §dfor area §5" . $area->getName() . "§d!";
                                 
 							}else{
                                 
@@ -629,13 +629,13 @@ class Main extends PluginBase implements Listener{
                                         
                                         //$o = TextFormat::RED . "Flag list in develoment";
                                         $flgs = $area->getFlags(); 
-                                        $l = $area->getName() . TextFormat::GRAY . " flags:";
+                                        $l = $area->getName() . TextFormat::GRAY . " §6flags:";
                                         foreach($flgs as $fi => $flg){
                                             $l .= "\n". TextFormat::GOLD . "    ". $fi . ": ";
                                             if( $flg ){
-                                                $l .= TextFormat::GREEN . "on";
+                                                $l .= TextFormat::GREEN . "§don";
                                             }else{
-                                                $l .= TextFormat::RED . "off";
+                                                $l .= TextFormat::RED . "§5off";
                                             }
                                         } 
                                         $o = $l;
@@ -661,43 +661,43 @@ class Main extends PluginBase implements Listener{
 										}
 										$o = TextFormat::GREEN . "Flag " . $flag . " set to " . $status . " for area " . $area->getName() . "!";
 									}else{
-										$o = TextFormat::RED . "Flag not found. (Flags: edit, god, pvp, flight, touch, effects, msg, passage, perms, drop, tnt)";
+										$o = TextFormat::RED . "§5The Flag named: §6$flag §5annot found. §6(Flags: edit, god, pvp, flight, touch, effects, msg, passage, perms, drop, tnt)";
 									}
 								}else{
-									$o = TextFormat::RED . "Please specify a flag. (Flags: edit, god, pvp, flight, touch, effects, msg, passage, perms, drop, tnt)";
+									$o = TextFormat::RED . "§5Please specify a flag. §6(Flags: edit, god, pvp, flight, touch, effects, msg, passage, perms, drop, tnt)";
 								}
 							}
 						}else{
-							$o = TextFormat::RED . "Area doesn't exist.";
+							$o = TextFormat::RED . "§5Area named §6$args[1] §5doesn't exist.";
 						}
 					}else{
-						$o = TextFormat::RED . "Please specify the area you would like to flag.";
+						$o = TextFormat::RED . "§5Please specify the area you would like to flag.";
 					}
 				}else{
-					$o = TextFormat::RED . "You do not have permission to use this subcommand."; 
+					$o = TextFormat::RED . "§2You do not have permission to use this subcommand."; 
 				}
 			break;
 			case "del":
 			case "delete":
 			case "remove":
-				if($sender->hasPermission("festival") || $sender->hasPermission("festival.command") || $sender->hasPermission("festival.command.fe") || $sender->hasPermission("festival.command.fe.delete")){
+				if($sender->isOp()) {
 					if(isset($args[1])){
 						if(isset($this->areas[strtolower($args[1])])){
 							$area = $this->areas[strtolower($args[1])];
 							$area->delete();
-							$o = TextFormat::GREEN . "Area deleted!";
+							$o = TextFormat::GREEN . "§dArea named §5$args[1] §dhas been deleted!";
 						}else{
-							$o = TextFormat::RED . "Area does not exist.";
+							$o = TextFormat::RED . "§5The Area named §6$args[1] §5does not exist.";
 						}
 					}else{
-						$o = TextFormat::RED . "Please specify an area to delete.";
+						$o = TextFormat::RED . "§5Please specify an area to delete.";
 					}
 				}else{
-					$o = TextFormat::RED . "You do not have permission to use this subcommand.";
+					$o = TextFormat::RED . "§2You do not have permission to use this subcommand.";
 				}
 			break;
 			case "whitelist":
-				if($sender->hasPermission("festival") || $sender->hasPermission("festival.command") || $sender->hasPermission("festival.command.fe") || $sender->hasPermission("festival.command.fe.whitelist")){
+				if($sender->isOp()) {
 					if(isset($args[1], $this->areas[strtolower($args[1])])){
 						$area = $this->areas[strtolower($args[1])];
 						if(isset($args[2])){
@@ -707,13 +707,13 @@ class Main extends PluginBase implements Listener{
 								$w = ($this->getServer()->getPlayer($args[3]) instanceof Player ? strtolower($this->getServer()->getPlayer($args[3])->getName()) : strtolower($args[3]));
 								if(!$area->isWhitelisted($w)){
 									$area->setWhitelisted($w);
-									$o = TextFormat::GREEN . "Player $w has been whitelisted in area " . $area->getName() . ".";
+									$o = TextFormat::GREEN . "§dThe Player§5 $w §dhas been whitelisted in area §5" . $area->getName() . "§d.";
 								}else{
-									$o = TextFormat::RED . "Player $w is already whitelisted in area " . $area->getName() . ".";
+									$o = TextFormat::RED . "§5The Player §6$w §5is already whitelisted in area §6" . $area->getName() . "§5.";
 								}
 								break;
 								case "list":
-								$o = TextFormat::AQUA . "Area " . $area->getName() . "'s whitelist:" . TextFormat::RESET;
+								$o = TextFormat::AQUA . "§aArea §b" . $area->getName() . "'s §awhitelist:" . TextFormat::RESET;
 								foreach($area->getWhitelist() as $w){
 									$o .= " $w;";
 								}
@@ -724,29 +724,29 @@ class Main extends PluginBase implements Listener{
 								$w = ($this->getServer()->getPlayer($args[3]) instanceof Player ? strtolower($this->getServer()->getPlayer($args[3])->getName()) : strtolower($args[3]));
 								if($area->isWhitelisted($w)){
 									$area->setWhitelisted($w, false);
-									$o = TextFormat::GREEN . "Player $w has been unwhitelisted in area " . $area->getName() . ".";
+									$o = TextFormat::GREEN . "§dThe Player §5$w §dhas been unwhitelisted in area §5" . $area->getName() . "§d.";
 								}else{
-									$o = TextFormat::RED . "Player $w is already unwhitelisted in area " . $area->getName() . ".";
+									$o = TextFormat::RED . "§5The Player §6$w §5is already unwhitelisted in area §6" . $area->getName() . "§5.";
 								}
 								break;
 								default:
-								$o = TextFormat::RED . "Please specify a valid action. Usage: /area whitelist " . $area->getName() . " <add/list/remove> [player]";
+								$o = TextFormat::RED . "§5Please specify a valid action. Use: /area whitelist §6" . $area->getName() . " §5<add/list/remove> [player]";
 								break;
 							}
 						}else{
-							$o = TextFormat::RED . "Please specify an action. Usage: /area whitelist " . $area->getName() . " <add/list/remove> [player]";
+							$o = TextFormat::RED . "§5Please specify an action. Use: /area whitelist §6" . $area->getName() . " §5<add/list/remove> [player]";
 						}
 					}else{
-						$o = TextFormat::RED . "Area doesn't exist. Usage: /area whitelist <area> <add/list/remove> [player]";
+						$o = TextFormat::RED . "§5The Area named §6$args[1] §5doesn't exist. Use: /area whitelist $args[1] <add/list/remove> [player]";
 					}
 				}else{
-					$o = TextFormat::RED . "You do not have permission to use this subcommand.";
+					$o = TextFormat::RED . "§cYou do not have permission to use this subcommand.";
 				}
 			break;
 			case "c":
 			case "cmd":
 			case "command": /** /fe command <areaname> <add|list|edit|del> <commandindex> <commandstring>  */
-				if( isset($args[1]) && (  $sender->hasPermission("festival") || $sender->hasPermission("festival.command") || $sender->hasPermission("festival.command.fe") || $sender->hasPermission("festival.command.fe.command") ) ){
+				if( isset($args[1]) && (  $sender->isOp()) {
 					if( isset( $this->areas[strtolower($args[1])] ) ){
 						if( isset($args[2]) ){
 							$do = strtolower($args[2]);
@@ -770,7 +770,7 @@ class Main extends PluginBase implements Listener{
 											if( isset($area->events[$do]) ){
 												$eventarr = explode(",", $area->events[$do] );
 												if(in_array($cid,$eventarr)){
-													$o = TextFormat::RED .'Command id:'.$cid.' allready set for area '.$do.'-event.';
+													$o = TextFormat::RED .'§5Command id:§6'.$cid.' §5already set for area §6'.$do.'§5-event.';
 												}else{
 													$eventarr[] = $cid;
 													$eventstr = implode(",", $eventarr );
@@ -1009,9 +1009,9 @@ class Main extends PluginBase implements Listener{
             $player = $ev->getDamager();
             if( $this->skippTime( 2, strtolower($player->getName()) ) ){
                 if( $god ){
-                    $this->areaMessage( 'All players are God in this Area!', $player );
+                    $this->areaMessage( '§5All players are God in this Area!', $player );
                 }else{
-                    $this->areaMessage( 'You are in a No-PVP Area!', $player );
+                    $this->areaMessage( '§cYou are in a No-PVP Area!', $player );
                 }
 			}
         }
@@ -1067,7 +1067,7 @@ class Main extends PluginBase implements Listener{
 	 * @return bool
 	 */
 	public function canEdit(Player $player, Position $position) : bool{
-		if($player->hasPermission("festival") || $player->hasPermission("festival.access")){
+		if($player->isOp()) {
 			return true;
 		}
 		$o = true;
@@ -1099,7 +1099,7 @@ class Main extends PluginBase implements Listener{
 	 * @return bool
 	 */
 	public function canTouch(Player $player, Position $position) : bool{
-		if($player->hasPermission("festival") || $player->hasPermission("festival.access")){
+		if($player->isOp()) {
 			return true;
 		}
 		$o = true;
@@ -1158,7 +1158,7 @@ class Main extends PluginBase implements Listener{
 	 * @return bool
 	 */
 	public function canDrop(Player $player, Position $position) : bool{
-		if($player->hasPermission("festival") || $player->hasPermission("festival.access")){
+		if($player->isOp()) {
 			return true;
 		}
 		$o = true;
@@ -1189,7 +1189,7 @@ class Main extends PluginBase implements Listener{
      */
     public function canUseEffects( Player $player ) : bool{
 
-		if($player->hasPermission("festival") || $player->hasPermission("festival.access")){
+		if($player->isOp()) {
 			return true;
 		}
 
@@ -1246,12 +1246,12 @@ class Main extends PluginBase implements Listener{
 		if(isset($this->selectingFirst[$playerName])){
 			unset($this->selectingFirst[$playerName]);
 			$this->firstPosition[$playerName] = $block->asVector3();
-			$player->sendMessage(TextFormat::GREEN . "Position 1 set to: (" . $block->getX() . ", " . $block->getY() . ", " . $block->getZ() . ")");
+			$player->sendMessage(TextFormat::GREEN . "§dPosition 1 set to: §a(" . $block->getX() . ", §b" . $block->getY() . ", §c" . $block->getZ() . ")");
 			$event->setCancelled();
 		}elseif(isset($this->selectingSecond[$playerName])){
 			unset($this->selectingSecond[$playerName]);
 			$this->secondPosition[$playerName] = $block->asVector3();
-			$player->sendMessage(TextFormat::GREEN . "Position 2 set to: (" . $block->getX() . ", " . $block->getY() . ", " . $block->getZ() . ")");
+			$player->sendMessage(TextFormat::GREEN . "§dPosition 2 set to: §a(" . $block->getX() . ", §b" . $block->getY() . ", §c" . $block->getZ() . ")");
 			$event->setCancelled();
 		}else{
 			if(!$this->canEdit($player, $block)){
@@ -1272,13 +1272,13 @@ class Main extends PluginBase implements Listener{
 			unset($this->selectingFirst[$playerName]);
 
 			$this->firstPosition[$playerName] = $block->asVector3();
-			$player->sendMessage(TextFormat::GREEN . "Position 1 set to: (" . $block->getX() . ", " . $block->getY() . ", " . $block->getZ() . ")");
+			$player->sendMessage(TextFormat::GREEN . "§dPosition 1 set to: §a(" . $block->getX() . ", §b" . $block->getY() . ", §c" . $block->getZ() . ")");
 			$event->setCancelled();
 		}elseif(isset($this->selectingSecond[$playerName])){
 			unset($this->selectingSecond[$playerName]);
 
 			$this->secondPosition[$playerName] = $block->asVector3();
-			$player->sendMessage(TextFormat::GREEN . "Position 2 set to: (" . $block->getX() . ", " . $block->getY() . ", " . $block->getZ() . ")");
+			$player->sendMessage(TextFormat::GREEN . "§dPosition 2 set to: §a(" . $block->getX() . ", §b" . $block->getY() . ", §c" . $block->getZ() . ")");
 			$event->setCancelled();
 		}else{
 			if(!$this->canEdit($player, $block)){
@@ -1294,7 +1294,7 @@ class Main extends PluginBase implements Listener{
 	 */
 	public function useOpPerms(Player $player, Area $area) : bool{
 
-		if($player->hasPermission("festival") || $player->hasPermission("festival.access")){
+		if($player->isOp()) {
 			return true; // festival ops..
 		}
 
@@ -1338,18 +1338,18 @@ class Main extends PluginBase implements Listener{
                 }
             }
         }
-        if( $player->isOp() ){
-            $fly = true; // ops can fly
+        if( $player->hasPermission("area.fly.bypass" ){
+            $fly = true; // People with the permissions area.fly.bypass can fly
         }
 
         $msg = '';
         if( !$fly && $player->isFlying() ){
             $this->playerTP[ strtolower( $player->getName() ) ] = true; // player tp active (fall save)
             $player->setFlying(false);
-            $player->sendMessage(  TextFormat::RED . "NO Flying here!" );
+            $player->sendMessage(  TextFormat::RED . "§cNO Flying here!" );
         }
         if( $fly && !$player->isFlying() && !$player->getAllowFlight() ){
-            $player->sendMessage( TextFormat::GREEN . "Flying allowed here!" );
+            $player->sendMessage( TextFormat::GREEN . "§5Flying allowed here!" );
         }
         $player->setAllowFlight($fly);
 
@@ -1375,7 +1375,7 @@ class Main extends PluginBase implements Listener{
 			
              // Player area passage
             if( $area->getFlag("passage") ){
-				if( $player->isOp() || $area->isWhitelisted( strtolower( $player->getName() )  ) || $player->hasPermission("festival") || $player->hasPermission("festival.access") ){
+				if( $player->isOp() || $area->isWhitelisted( strtolower( $player->getName() )  ) || $player->isOp()){
 					if( ( $area->contains( $player->getPosition(), $player->getLevel()->getName() ) && !$area->contains( $ev->getFrom(), $player->getLevel()->getName() ) )
 					|| !$area->contains( $player->getPosition(), $player->getLevel()->getName() ) && $area->contains( $ev->getFrom(), $player->getLevel()->getName() ) ){
 						// ops & whitelist players pass
