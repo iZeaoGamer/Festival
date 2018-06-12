@@ -2,7 +2,7 @@
 
 # Festival options
 Options:
-  
+ 
   # Messages (tip/pop)  
   Msgtype: pop
   
@@ -11,7 +11,7 @@ Options:
   
   # Auto whitelist area creator (on/off)
   AutoWhitelist: on
-
+  
 # Settings for unprotected areas in worlds without specific settings:
 Default:
 
@@ -29,10 +29,10 @@ Default:
 
   # Keep players from touching blocks and activating things like chests?
   Touch: false
-  
+ 
   # Keep players from having effects like speed or night vision?
   Effects: false
-   
+  
   # Keep players from seeing enter/leave/description messages?
   Msg: false
 
@@ -41,7 +41,7 @@ Default:
 
   # Prevent players drop items in the area? Deny drop
   Drop: false
-  
+ 
   # Prevent explosions in the area? Enable the TNT flag.
   TNT: false
 
@@ -79,7 +79,7 @@ Worlds:
 
     # Prevent players drop items in the area? Deny drop
     Drop: false
-	
+
     # Prevent explosions in the area? Enable the TNT flag.
     TNT: false
 
