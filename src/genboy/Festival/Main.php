@@ -278,11 +278,13 @@ class Main extends PluginBase implements Listener{
 		$this->saveAreas();
 
 		// console output
+        $this->codeSigned();
+		
 		$ca = 0;
 		foreach( $this->areas as $a ){
 			$ca = $ca + count( $a->getCommands() );
 		}
-		$this->getLogger()->info(TextFormat::GREEN . "Festival v1.0.6-13-dev has " . count($this->areas) . " areas and ". $ca ." commands set.");
+		$this->getLogger()->info( "  ". $ca ." commands in " . count($this->areas) . " areas" );
 		
         //v1.0.6-13-dev
 		if( count($newchange) > 0 ){
@@ -290,7 +292,6 @@ class Main extends PluginBase implements Listener{
 			     $this->getLogger()->info( $ttl . ": " . $txt );
             }
 		}
-
 	}
 
     /** Flag check experimental (synonym to original name)
@@ -520,32 +521,38 @@ class Main extends PluginBase implements Listener{
 					$o = TextFormat::RED . "You must specify an existing Area name";
 					break;
 				}
-				$area = $this->areas[strtolower($args[1])];
-                
-				if( $area->isWhitelisted($playerName) || $sender->hasPermission("festival") || $sender->hasPermission("festival.command") || $sender->hasPermission("festival.command.fe") || $sender->hasPermission("festival.command.fe.tp")){
-					 
-					if($area !== null){
-						$levelName = $area->getLevelName();
-						if(isset($levelName) && Server::getInstance()->loadLevel($levelName) != false){
-							$o = TextFormat::GREEN . "You are teleporting to Area " . $args[1];
-							$cx = $area->getSecondPosition()->getX() + ( ( $area->getFirstPosition()->getX() - $area->getSecondPosition()->getX() ) / 2 );
-							$cz = $area->getSecondPosition()->getZ() + ( ( $area->getFirstPosition()->getZ() - $area->getSecondPosition()->getZ() ) / 2 );
-							$cy1 = min( $area->getSecondPosition()->getY(), $area->getFirstPosition()->getY());
-							$cy2 = max( $area->getSecondPosition()->getY(), $area->getFirstPosition()->getY());
-							$this->playerTP[$playerName] = true; // player tp active
-                            //$this->areaMessage( 'Fall save on!', $sender );
-							$sender->sendMessage( $playerName );
-							$sender->teleport( new Position( $cx, $cy2+ 0.5, $cz, $area->getLevel() ) );
-                            
-						}else{
-							$o = TextFormat::RED . "The level " . $levelName . " for Area ". $args[1] ." cannot be found";
-						}
-					}else{
-						$o = TextFormat::RED . "The Area " . $args[1] . " could not be found ";
-					}
-				}else{
-					$o = TextFormat::RED . "You do not have permission to use this subcommand.";
-				}
+				if( isset( $this->areas[strtolower($args[1])] ) ){
+
+                    $area = $this->areas[strtolower($args[1])];
+
+                    $position = $sender->getPosition();
+
+                    $perms = (isset($this->levels[$position->getLevel()->getName()]) ? $this->levels[ $position->getLevel()->getName() ]["Perms"] : $this->perms);
+
+                    if( $perms || $area->isWhitelisted($playerName) || $sender->hasPermission("festival") || $sender->hasPermission("festival.command") || $sender->hasPermission("festival.command.fe") || $sender->hasPermission("festival.command.fe.tp")){
+
+                        $levelName = $area->getLevelName();
+                        if(isset($levelName) && Server::getInstance()->loadLevel($levelName) != false){
+                                $o = TextFormat::GREEN . "You are teleporting to Area " . $args[1];
+                                $cx = $area->getSecondPosition()->getX() + ( ( $area->getFirstPosition()->getX() - $area->getSecondPosition()->getX() ) / 2 );
+                                $cz = $area->getSecondPosition()->getZ() + ( ( $area->getFirstPosition()->getZ() - $area->getSecondPosition()->getZ() ) / 2 );
+                                $cy1 = min( $area->getSecondPosition()->getY(), $area->getFirstPosition()->getY());
+                                $cy2 = max( $area->getSecondPosition()->getY(), $area->getFirstPosition()->getY());
+                                $this->playerTP[$playerName] = true; // player tp active
+                                //$this->areaMessage( 'Fall save on!', $sender );
+                                $sender->sendMessage( $playerName );
+                               $sender->teleport( new Position( $cx, $cy2+ 0.5, $cz, $area->getLevel() ) );
+
+                        }else{
+                            $o = TextFormat::RED . "The level " . $levelName . " for Area ". $args[1] ." cannot be found";
+                        }
+                    }else{
+                        $o = TextFormat::RED . "You do not have permission to use this subcommand.";
+                    }
+                }else{
+                    $list = $this->listAllAreas();
+                    $o = TextFormat::RED . "The Area " . $args[1] . " could not be found. ". $list;
+                }
 			break;
 			case "f":
 			case "flag":
@@ -1155,7 +1162,7 @@ class Main extends PluginBase implements Listener{
 			return true;
 		}
 		$o = true;
-		$g = (isset($this->levels[$position->getLevel()->getName()]) ? $this->levels[$position->getLevel()->getName()]["Drop"] : $this->edit);
+		$g = (isset($this->levels[$position->getLevel()->getName()]) ? $this->levels[$position->getLevel()->getName()]["Drop"] : $this->drop);
 		if($g){
 			$o = false;
 		}
@@ -1176,6 +1183,42 @@ class Main extends PluginBase implements Listener{
 		}
 		return $o;
 	}
+	/** Effects
+	 * @param Player $player
+	 * @param Areas $area
+     */
+    public function canUseEffects( Player $player ) : bool{
+
+		if($player->hasPermission("festival") || $player->hasPermission("festival.access")){
+			return true;
+		}
+
+        $position = $player->getPosition();
+		$o = true;
+		$g = (isset($this->levels[$position->getLevel()->getName()]) ? $this->levels[$position->getLevel()->getName()]["Effects"] : $this->effects);
+		if($g){
+			$o = false;
+		}
+		foreach($this->areas as $area){
+			if($area->contains($position, $position->getLevel()->getName())){
+				if($area->getFlag("effects")){
+					$o = false;
+				}
+				if($area->isWhitelisted(strtolower($player->getName()))){
+					$o = true;
+					break;
+				}
+				if(!$area->getFlag("effects") && $g){
+					$o = true;
+					break;
+				}
+			}
+		}
+		return $o;
+	}
+
+
+
     /* Handles TNT flag */
     
     /**
@@ -1277,12 +1320,15 @@ class Main extends PluginBase implements Listener{
 
         $fly = true;
 
-        if( $this->flight ){
-            $fly = false; // flag default
-        }
-        if( $this->levels[ $player->getLevel()->getName() ]["Flight"]  ){
-            $fly = false; // level flag default
-        }
+      $position = $player->getPosition();
+        $f = (isset($this->levels[$position->getLevel()->getName()]) ? $this->levels[$position->getLevel()->getName()]["Flight"] : $this->flight);
+        if( $f ){
+             $fly = false; // flag default
+         }
+         if( $this->levels[ $player->getLevel()->getName() ]["Flight"]  ){
+             $fly = false; // level flag default
+         }
+
         foreach($this->areas as $area){
             if( $area->contains( $player->getPosition(), $player->getLevel()->getName() ) ){
                 if(  $area->getFlag("flight") && !$area->isWhitelisted( strtolower($player->getName())) ){
@@ -1327,7 +1373,8 @@ class Main extends PluginBase implements Listener{
 
 		foreach($this->areas as $area){
 			
-            if( $area->getFlag("passage") ){ // test passage flag
+             // Player area passage
+            if( $area->getFlag("passage") ){
 				if( $player->isOp() || $area->isWhitelisted( strtolower( $player->getName() )  ) || $player->hasPermission("festival") || $player->hasPermission("festival.access") ){
 					if( ( $area->contains( $player->getPosition(), $player->getLevel()->getName() ) && !$area->contains( $ev->getFrom(), $player->getLevel()->getName() ) )
 					|| !$area->contains( $player->getPosition(), $player->getLevel()->getName() ) && $area->contains( $ev->getFrom(), $player->getLevel()->getName() ) ){
@@ -1348,17 +1395,20 @@ class Main extends PluginBase implements Listener{
 					}
 				} 
 			}
-            
-			if( !$area->contains( $player->getPosition(), $player->getLevel()->getName() ) ){ // no barrier
+            // Player enter or leave area
+			if( !$area->contains( $player->getPosition(), $player->getLevel()->getName() ) ){
+                // Player leave Area
 				if( in_array( strtolower( $area->getName() ) , $this->inArea[$playerName] ) ){
 					$this->leaveArea($area, $ev);
 					break;
 				}
 			}else{
-				if( !in_array( strtolower( $area->getName() ), $this->inArea[$playerName] ) ){ // Player enter in Area
+				 // Player enter Area
+				if( !in_array( strtolower( $area->getName() ), $this->inArea[$playerName] ) ){
 					$this->enterArea($area, $ev);
 					break;
 				}
+				 // Player enter Area Center
 				if( $area->centerContains( $player->getPosition(), $player->getLevel()->getName() ) ){
 					if( !in_array( strtolower( $area->getName() )."center", $this->inArea[$playerName] ) ){ // Player enter in Area
 						$this->enterAreaCenter($area, $ev);
@@ -1373,7 +1423,7 @@ class Main extends PluginBase implements Listener{
 			}
             
             /** Area Player Monitor */
-            $this->AreaPlayerMonitor($area, $ev);
+            //$this->AreaPlayerMonitor($area, $ev);
             
 		} 
 
@@ -1394,8 +1444,8 @@ class Main extends PluginBase implements Listener{
         if( $area->contains( $player->getPosition(), $player->getLevel()->getName() ) ){ 
             if( $this->skippTime(5, strtolower($player->getName()) ) ){ 
                 // start / renew effects
-                $msg = TextFormat::YELLOW . "Time passing in area " . $area->getName();
-                $this->areaMessage( $msg, $player ); 
+                //$msg = TextFormat::YELLOW . "Time passing in area " . $area->getName();
+                //$this->areaMessage( $msg, $player );
             }
         }
         
@@ -1472,14 +1522,13 @@ class Main extends PluginBase implements Listener{
 			} 
 		}
         
-        // effects 
-        if( !$area->getFlag("effects") || $player->isOp() || $area->isWhitelisted( strtolower( $player->getName() ) ) || $player->hasPermission("festival") || $player->hasPermission("festival.access") ){
+        // effects check 
+       if( $this->canUseEffects( $player ) ){
             // use effects
         }else{
             foreach ($player->getEffects() as $effect) {
-            //if ($effect->getDuration() >= 999999) {
+         
                 $player->removeEffect($effect->getId());
-            //}
             }
         }
         
@@ -1760,6 +1809,22 @@ class Main extends PluginBase implements Listener{
 		}
 		file_put_contents($this->getDataFolder() . "areas.json", json_encode($areas));
 	}
+	/** List all area's
+     * return
+     */
+    public function listAllAreas(){
+        if( count($this->areas) > 0 ){
+            $t = 'Area names: ';
+            foreach($this->areas as $area){
+                if( !empty( $area->getName() ) ){
+                    $t .= $area->getName().', ';
+                }
+            }
+            return rtrim($t,',');
+        }else{
+            return 'No area available..';
+        }
+    }
 /**
      * canExplode()
      *
@@ -1792,5 +1857,17 @@ class Main extends PluginBase implements Listener{
         }
         return $o;
     }
-    
+/**  Festival Console Sign Flag for developers
+     *   makes it easy to find Festival console output fast
+     */
+    public function codeSigned(){
+
+        $this->getLogger()->info( "by            .            " );
+        $this->getLogger()->info( "  ,-. ,-. ,-. |-. ,-. . .  " );
+        $this->getLogger()->info( "  | | |-' | | | | | | | |  " );
+        $this->getLogger()->info( "  `-| `-' ' ' `-' `-' `-|  " );
+        $this->getLogger()->info( "   ,|                  /|  " );
+        $this->getLogger()->info( "   `'                 `-'  " );
+
+    }
 }
