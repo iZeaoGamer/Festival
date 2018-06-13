@@ -435,7 +435,17 @@ class Main extends PluginBase implements Listener{
 			break;
 			case "list":
 				if($sender->isOp()) {
-					$lvls = $this->getServer()->getLevels();
+					
+					
+					$levelNamesArray = scandir($this->getServer()->getDataPath() . "worlds/");
+                    foreach($levelNamesArray as $levelName) {
+                      if($levelName === "." || $levelName === "..") {
+                        continue;
+                      }
+                      $this->getServer()->loadLevel($levelName); //Note that this will return false if the world folder is not a valid level, and could not be loaded.
+                    }
+                    $lvls = $this->getServer()->getLevels();
+
 					$o = '';
 					$l = '';
 					if( isset( $args[1] )){
@@ -1747,7 +1757,7 @@ class Main extends PluginBase implements Listener{
      *   makes it easy to find Festival console output fast
      */
     public function codeSigned(){
-        $this->getLogger()->info( "by            .            " );
+        $this->getLogger()->info( "by -----------.------------ ");
         $this->getLogger()->info( "  ,-. ,-. ,-. |-. ,-. . .  " );
         $this->getLogger()->info( "  | | |-' | | | | | | | |  " );
         $this->getLogger()->info( "  `-| `-' ' ' `-' `-' `-|  " );
