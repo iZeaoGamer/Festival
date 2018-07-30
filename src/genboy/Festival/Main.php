@@ -3,7 +3,6 @@
 declare(strict_types = 1);
 
 /** src/genboy/Festival/Main.php */
-
 namespace genboy\Festival;
 
 use pocketmine\command\Command;
@@ -61,11 +60,7 @@ class Main extends PluginBase implements Listener{
 	/** @var bool */
 	private $drop = false;
 	/** @var bool */
-	private $tnt = false;
-	/** @var bool */
 	private $hunger = false;
-	/** @var bool */
-	private $perms = false;
 	/** @var bool[] */
 	private $selectingFirst = [];
 	/** @var bool[] */
@@ -462,7 +457,6 @@ class Main extends PluginBase implements Listener{
                       $this->getServer()->loadLevel($levelName); //Note that this will return false if the world folder is not a valid level, and could not be loaded.
                     }
                     $lvls = $this->getServer()->getLevels();
-
 					$o = '';
 					$l = '';
 					if( isset( $args[1] )){
