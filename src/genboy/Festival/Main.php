@@ -60,6 +60,12 @@ class Main extends PluginBase implements Listener{
 	private $perms = false;
 	/** @var bool */
 	private $drop = false;
+	/** @var bool */
+	private $tnt = false;
+	/** @var bool */
+	private $hunger = false;
+	/** @var bool */
+	private $perms = false;
 	/** @var bool[] */
 	private $selectingFirst = [];
 	/** @var bool[] */
@@ -114,6 +120,10 @@ class Main extends PluginBase implements Listener{
 			if( !isset($datum["flags"]["tnt"]) ){
 				$flags["tnt"] = false;
 				$newchange['TNT'] = "! Area tnt flag missing, now updated to 'false'; please see /resources/config.yml";
+			}
+			if( !isset($datum["flags"]["hunger"]) ){
+				$flags["hunger"] = false;
+				$newchange['Hunger'] = "! Area Hunger flag missing, now updated to 'false'; please see /resources/config.yml";
 			}
             //new flags v 1.0.5-12
 			if( !isset($datum["flags"]["effects"]) ){
@@ -184,6 +194,9 @@ class Main extends PluginBase implements Listener{
 		if(!isset($c["Default"]["TNT"])) {
 			$c["Default"]["TNT"] = false;
 		}
+		if(!isset($c["Default"]["Hunger"])) {
+			$c["Default"]["Hunger"] = false;
+		}
 		// new in v1.0.5-12
 		if(!isset($c["Default"]["Effects"])) {
 			$c["Default"]["Effects"] = false;
@@ -205,6 +218,7 @@ class Main extends PluginBase implements Listener{
 		$this->perms = $c["Default"]["Perms"];
 		$this->drop = $c["Default"]["Drop"];
 		$this->tnt  = $c["Default"]["TNT"];
+		$this->tnt = $c["Default"]["Hunger"];
         // new in v1.0.5-12
 		$this->effects = $c["Default"]["Effects"];
         $this->flagset = $c['Default']; 
@@ -233,6 +247,9 @@ class Main extends PluginBase implements Listener{
 				if( !isset($flags["TNT"]) ){
 					$flags["TNT"] = $this->tnt;
 				}
+				if(!isset($c["Default"]["Hunger"])) {
+			$c["Default"]["Hunger"] = false;
+		}
                 // new v1.0.5-12
 				if( !isset($flags["Effects"]) ){
 					$flags["Effects"] = $this->effects;
@@ -943,7 +960,7 @@ class Main extends PluginBase implements Listener{
 	 */
 	public function canPVP(EntityDamageEvent $ev) : bool{
         $o = true;
-        $god = false;
+        $pvp = false;
         if($ev instanceof EntityDamageByEntityEvent){
             if($ev->getEntity() instanceof Player && $ev->getDamager() instanceof Player){
                 $entity = $ev->getEntity();
@@ -953,7 +970,7 @@ class Main extends PluginBase implements Listener{
                 }
                 foreach($this->areas as $area){
                     if($area->contains(new Vector3($entity->getX(), $entity->getY(), $entity->getZ()), $entity->getLevel()->getName())){
-                        $god = $area->getFlag("god");
+                        $pvp = $area->getFlag("pvp");
                         if($default && !$area->getFlag("pvp")){
                             $o = true;
                             break;
@@ -969,8 +986,8 @@ class Main extends PluginBase implements Listener{
         if( !$o ){
             $player = $ev->getDamager();
             if( $this->skippTime( 2, strtolower($player->getName()) ) ){
-                if( $god ){
-                    $this->areaMessage( '§5All players are God in this Area!', $player );
+                if( $pvp ){
+                    $this->areaMessage( '§5PvP is disabled in this area.', $player );
                 }else{
                     $this->areaMessage( '§cYou are in a No-PVP Area!', $player );
                 }
@@ -987,10 +1004,9 @@ class Main extends PluginBase implements Listener{
 			$player = $ev->getEntity();
 			$playerName = strtolower($player->getName());
 			if(!$this->canGetHurt($player)){
-				$ev->setCancelled();
-                return false;
-			}
-            if(!$this->canPVP($ev)){ // v 1.0.6-13
+				if( $player->isOnFire() ){
+                    $player->extinguish(); // 1.0.7-dev
+                }
 				$ev->setCancelled();
                 return false;
 			}
@@ -1016,6 +1032,18 @@ class Main extends PluginBase implements Listener{
 	public function onDamage(EntityDamageEvent $event) : void{
 		$this->canDamage( $event );
 	}
+	public function onPvP(EntityDamageEvent $ev){
+	  if($ev instanceof EntityDamageByEntityEvent){
+		  if($ev->getEntity() instanceof Player){
+			$entity = $ev->getEntity();
+			if(!$this->canPVP($ev)){
+				$ev->setCancelled();
+                return false;
+			}
+		  }
+	  }
+	}
+			
 	/** Edit
 	 * @param Player   $player
 	 * @param Position $position
@@ -1273,21 +1301,7 @@ class Main extends PluginBase implements Listener{
                 }
             }
         }
-        if( $player->hasPermission("area.fly.bypass" )){
-            $fly = true; // People with the permissions area.fly.bypass can fly
-        }
-        $msg = '';
-        if( !$fly && $player->isFlying() ){
-            $this->playerTP[ strtolower( $player->getName() ) ] = true; // player tp active (fall save)
-            $player->setFlying(false);
-            $player->sendMessage(  TextFormat::RED . "§cNO Flying here!" );
-        }
-        if( $fly && !$player->isFlying() && !$player->getAllowFlight() ){
-            $player->sendMessage( TextFormat::GREEN . "§5Flying allowed here!" );
-        }
-        $player->setAllowFlight($fly);
-        return $fly;
-    }
+	}
 	/** On player move ..
 	 * @param PlayerMoveEvent $ev
 	 * @var string inArea
@@ -1735,12 +1749,12 @@ class Main extends PluginBase implements Listener{
      */
     public function canExplode(Position $pos, Level $level): bool{
         $o = true;
-        $g = (isset($this->levels[$level->getName()]) ? $this->levels[$level->getName()]["TNT"] : $this->tnt);
+        $g = (isset($this->levels[$pos->getLevel()->getName()]) ? $this->levels[$pos->getLevel()->getName()]["TNT"] : $this->tnt);
         if ($g) {
             $o = false;
         }
         foreach ($this->areas as $area) {
-            if ($area->contains(new Vector3($pos->getX(), $pos->getY(), $pos->getZ()), $level->getName())) {
+            if ($area->contains(new Vector3($pos->getX(), $pos->getY(), $pos->getZ()), $pos->getLevel()->getName())) {
                 if ($area->getFlag("tnt")) {
                     $o = false;
                     break;
