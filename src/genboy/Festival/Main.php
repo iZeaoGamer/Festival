@@ -219,7 +219,7 @@ class Main extends PluginBase implements Listener{
 		$this->drop = $c["Default"]["Drop"];
 		$this->tnt  = $c["Default"]["TNT"];
 		$this->tnt = $c["Default"]["Hunger"];
-		$this->nofalldamage = $c["Default"]["Nofalldamage"];
+		$this->nofalldamage = $c["Default"]["NoFallDamage"];
         // new in v1.0.5-12
 		$this->effects = $c["Default"]["Effects"];
         $this->flagset = $c['Default']; 
@@ -1040,7 +1040,7 @@ class Main extends PluginBase implements Listener{
 	 */
 	public function nfdamage(Entity $entity) : bool{
 		$o = true;
-		$default = (isset($this->levels[$entity->getLevel()->getName()]) ? $this->levels[$entity->getLevel()->getName()]["Nofalldamage"] : $this->nofalldamage);
+		$default = (isset($this->levels[$entity->getLevel()->getName()]) ? $this->levels[$entity->getLevel()->getName()]["NoFallDamage"] : $this->nofalldamage);
 		if($default){
 			$o = false;
 		}
