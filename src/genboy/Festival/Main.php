@@ -197,6 +197,9 @@ class Main extends PluginBase implements Listener{
 		if(!isset($c["Default"]["Hunger"])) {
 			$c["Default"]["Hunger"] = false;
 		}
+		if(!isset($c["Default"]["NoFallDamage"])) {
+			$c["Default"]["NoFallDamage"])) {
+		}
 		// new in v1.0.5-12
 		if(!isset($c["Default"]["Effects"])) {
 			$c["Default"]["Effects"] = false;
