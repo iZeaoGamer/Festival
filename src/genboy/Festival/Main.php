@@ -119,6 +119,7 @@ class Main extends PluginBase implements Listener{
 				$newchange['TNT'] = "! Area tnt flag missing, now updated to 'false'; please see /resources/config.yml";
 			}
 			if( !isset($datum["flags"]["nofalldamage"]) ){
+				$flags["nofalldamage"] = false;
 				$newchange['NoFallDamage'] = "! Area NoFallDamage flag missing, now updated to 'false'; please see /resources/config.yml";
 			}
 			if( !isset($datum["flags"]["hunger"]) ){
@@ -198,7 +199,7 @@ class Main extends PluginBase implements Listener{
 			$c["Default"]["Hunger"] = false;
 		}
 		if(!isset($c["Default"]["NoFallDamage"])) {
-			$c["Default"]["NoFallDamage"])) {
+			$c["Default"]["NoFallDamage"] = false;
 		}
 		// new in v1.0.5-12
 		if(!isset($c["Default"]["Effects"])) {
