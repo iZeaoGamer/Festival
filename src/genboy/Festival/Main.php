@@ -56,6 +56,8 @@ class Main extends PluginBase implements Listener{
 	/** @var bool */
 	private $passage = false;
 	/** @var bool */
+	private $nofalldamage = false;
+	/** @var bool */
 	private $perms = false;
 	/** @var bool */
 	private $drop = false;
@@ -115,6 +117,9 @@ class Main extends PluginBase implements Listener{
 			if( !isset($datum["flags"]["tnt"]) ){
 				$flags["tnt"] = false;
 				$newchange['TNT'] = "! Area tnt flag missing, now updated to 'false'; please see /resources/config.yml";
+			}
+			if( !isset($datum["flags"]["nofalldamage"]) ){
+				$newchange['NoFallDamage'] = "! Area NoFallDamage flag missing, now updated to 'false'; please see /resources/config.yml";
 			}
 			if( !isset($datum["flags"]["hunger"]) ){
 				$flags["hunger"] = false;
@@ -214,6 +219,7 @@ class Main extends PluginBase implements Listener{
 		$this->drop = $c["Default"]["Drop"];
 		$this->tnt  = $c["Default"]["TNT"];
 		$this->tnt = $c["Default"]["Hunger"];
+		$this->nofalldamage = $c["Default"]["Nofalldamage"];
         // new in v1.0.5-12
 		$this->effects = $c["Default"]["Effects"];
         $this->flagset = $c['Default']; 
@@ -241,6 +247,9 @@ class Main extends PluginBase implements Listener{
 				}
 				if( !isset($flags["TNT"]) ){
 					$flags["TNT"] = $this->tnt;
+				}
+				if( !isset($flags["NoFallDamage"]) ){
+					$flags["NoFallDamage"] = $this->nofalldamage;
 				}
 				if(!isset($c["Default"]["Hunger"])) {
 			$c["Default"]["Hunger"] = false;
@@ -294,6 +303,7 @@ class Main extends PluginBase implements Listener{
 			"tnt","explosion",
             "msg","message",
             "passage","pass","barrier",
+			"nofalldamage",
             "perms","perm"
         ];
         $str = strtolower( $str );
@@ -318,6 +328,9 @@ class Main extends PluginBase implements Listener{
             if( $str == "message" ){
                 $flag = "msg";
             }
+			if( $str == "nofalldamage" ){
+				$flag = "nofalldamage";
+			}
             if( $str == "perm" ){
                 $flag = "perms";
             }
@@ -394,7 +407,7 @@ class Main extends PluginBase implements Listener{
                                 new Area(
                                     strtolower($args[1]),
                                     "",
-                                    ["edit" => $flags['Edit'], "god" => $flags['God'], "pvp" => $flags["PVP"], "flight"=> $flags["Flight"], "touch" => $flags['Touch'], "effects" => $flags['Effects'], "drop" => $flags['Drop'], "tnt" => $flags['TNT'], "msg" => $flags['Msg'], "passage" => $flags['Passage'], "perms" => $flags['Perms']],
+                                    ["edit" => $flags['Edit'], "god" => $flags['God'], "pvp" => $flags["PVP"], "flight"=> $flags["Flight"], "touch" => $flags['Touch'], "effects" => $flags['Effects'], "drop" => $flags['Drop'], "tnt" => $flags['TNT'], "nofalldamage" => $flags['NoFallDamage'], "msg" => $flags['Msg'], "passage" => $flags['Passage'], "perms" => $flags['Perms']],
                                     $this->firstPosition[$playerName],
                                     $this->secondPosition[$playerName],
                                     $sender->getLevel()->getName(),
@@ -547,6 +560,7 @@ class Main extends PluginBase implements Listener{
 			case "god":
 			case "msg":
 			case "pass":
+			case "nofalldamage";
 			case "passage":
 			case "barrier":
 			case "perm":
@@ -1012,12 +1026,36 @@ class Main extends PluginBase implements Listener{
 		}
         return true;
     }
-	/** On hurt
+	public function onHurt(EntityDamageEvent $event) : void{
+		$this->canDamage( $event );
+	}
+	/** On Damage
 	 * @param EntityDamageEvent $event
 	 * @ignoreCancelled true
 	 */
-	public function onHurt(EntityDamageEvent $event) : void{
-		$this->canDamage( $event );
+	/**
+	 * @param Entity $entity
+	 *
+	 * @return bool
+	 */
+	public function nfdamage(Entity $entity) : bool{
+		$o = true;
+		$default = (isset($this->levels[$entity->getLevel()->getName()]) ? $this->levels[$entity->getLevel()->getName()]["Nofalldamage"] : $this->nofalldamage);
+		if($default){
+			$o = false;
+		}
+		foreach($this->areas as $area){
+			if($area->contains(new Vector3($entity->getX(), $entity->getY(), $entity->getZ()), $entity->getLevel()->getName())){
+				if($default && !$area->getFlag("nofalldamage")){
+					$o = true;
+					break;
+				}
+				if($area->getFlag("nofalldamage")){
+					$o = false;
+				}
+			}
+		}
+		return $o;
 	}
 	/** On Damage
 	 * @param EntityDamageEvent $event
@@ -1761,6 +1799,20 @@ class Main extends PluginBase implements Listener{
         }
         return $o;
     }
+	public function onFallDisable(EntityDamageEvent $event) : void{
+		$player = $event->getEntity();
+    	$level = $player->getLevel()->getFolderName();
+		$cause = $event->getCause();
+		if($event->getEntity() instanceof Player){
+			if(!$this->canGetHurt($player)){
+				$event->setCancelled();
+			}
+			
+			if($cause == EntityDamageEvent::CAUSE_FALL && !$this->nfdamage($player)){
+				$event->setCancelled(true);
+			}
+		}
+	}
 /**  Festival Console Sign Flag for developers
      *   makes it easy to find Festival console output fast
      */
