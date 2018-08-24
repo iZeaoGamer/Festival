@@ -14,6 +14,7 @@ use pocketmine\event\block\BlockPlaceEvent;
 use pocketmine\event\entity\EntityDamageEvent;
 use pocketmine\event\entity\EntityDamageByEntityEvent;
 use pocketmine\event\entity\EntityExplodeEvent;
+use pocketmine\event\entity\EntitySpawnEvent;
 use pocketmine\event\Listener;
 use pocketmine\level\{Level, Position};
 use pocketmine\math\Vector3;
@@ -63,6 +64,8 @@ class Main extends PluginBase implements Listener{
 	private $drop = false;
 	/** @var bool */
 	private $hunger = false;
+	/** @var bool */
+	private $mobspawning = false;
 	/** @var bool[] */
 	private $selectingFirst = [];
 	/** @var bool[] */
@@ -140,6 +143,10 @@ class Main extends PluginBase implements Listener{
 				$flags["flight"] = false;
 				$newchange['Flight'] = "! Area Flight flag missing, now updated to 'false'; please see /resources/config.yml";
 			}
+			if( !isset($datum["flags"]["mobspawning"]) ){
+				$flags["mobspawning"] = false;
+				$newchange['MobSpawning'] = "! Area Mob Spawning flag missing, now updated to 'false'; please see /resources/config.yml";
+			}
 			new Area($datum["name"], $datum["desc"], $flags, new Vector3($datum["pos1"]["0"], $datum["pos1"]["1"], $datum["pos1"]["2"]), new Vector3($datum["pos2"]["0"], $datum["pos2"]["1"], $datum["pos2"]["2"]), $datum["level"], $datum["whitelist"], $datum["commands"], $datum["events"], $this);
 		}
 		$c = yaml_parse_file($this->getDataFolder() . "config.yml");
@@ -212,6 +219,9 @@ class Main extends PluginBase implements Listener{
 		if(!isset($c["Default"]["Flight"])) {
 			$c["Default"]["Flight"] = false;
 		}
+		if(!isset($c["Default"]["MobSpawning"])) {
+			$c["Default"]["MobSpawning"] = false;
+		}
 		$this->god = $c["Default"]["God"];
 		$this->edit = $c["Default"]["Edit"];
 		$this->touch = $c["Default"]["Touch"];
@@ -230,7 +240,7 @@ class Main extends PluginBase implements Listener{
 		// new in v1.0.6-13
 		$this->pvp = $c["Default"]["PVP"];
 		$this->flight = $c["Default"]["Flight"];
-        
+        $this->mobspawning = $c["Default"]["MobSpawning"];
         // world default flag settings
 		if(is_array( $c["Worlds"] )){
 			foreach($c["Worlds"] as $level => $flags){
@@ -268,6 +278,9 @@ class Main extends PluginBase implements Listener{
 				}
 				if( !isset($flags["Flight"]) ){
 					$flags["Flight"] = $this->flight;
+				}
+				if( !isset($flags["MobSpawning"]) ){
+					$flags["MobSpawning"] = $this->mobspawning;
 				}
 				$this->levels[$level] = $flags;
 			}
@@ -308,7 +321,8 @@ class Main extends PluginBase implements Listener{
             "msg","message",
             "passage","pass","barrier",
 			"nofalldamage",
-            "perms","perm"
+            "perms","perm",
+			"mobspawning","nospawn"
         ];
         $str = strtolower( $str );
         $flag = false;
@@ -328,6 +342,9 @@ class Main extends PluginBase implements Listener{
             }
             if( $str == "magic" || $str == "effect" ){
                 $flag = "effects";
+            }
+			if( $str == "mobspawning" || $str == "nospawn" ){
+                $flag = "mobspawns";
             }
             if( $str == "message" ){
                 $flag = "msg";
@@ -411,7 +428,7 @@ class Main extends PluginBase implements Listener{
                                 new Area(
                                     strtolower($args[1]),
                                     "",
-                                    ["edit" => $flags['Edit'], "god" => $flags['God'], "pvp" => $flags["PVP"], "flight"=> $flags["Flight"], "touch" => $flags['Touch'], "effects" => $flags['Effects'], "drop" => $flags['Drop'], "tnt" => $flags['TNT'], "nofalldamage" => $flags['NoFallDamage'], "msg" => $flags['Msg'], "passage" => $flags['Passage'], "perms" => $flags['Perms']],
+                                    ["edit" => $flags['Edit'], "god" => $flags['God'], "pvp" => $flags["PVP"], "flight"=> $flags["Flight"], "touch" => $flags['Touch'], "effects" => $flags['Effects'], "drop" => $flags['Drop'], "tnt" => $flags['TNT'], "nofalldamage" => $flags['NoFallDamage'], "msg" => $flags['Msg'], "passage" => $flags['Passage'], "perms" => $flags['Perms'], "mobspawning" => $flags['MobSpawning']],
                                     $this->firstPosition[$playerName],
                                     $this->secondPosition[$playerName],
                                     $sender->getLevel()->getName(),
@@ -570,6 +587,7 @@ class Main extends PluginBase implements Listener{
 			case "perm":
 			case "perms":
 			case "drop":
+			case "mobspawning":
 				if($sender->isOp()) {
 					if(isset($args[1])){
                         
@@ -660,10 +678,10 @@ class Main extends PluginBase implements Listener{
 										}
 										$o = TextFormat::GREEN . "Flag " . $flag . " set to " . $status . " for area " . $area->getName() . "!";
 									}else{
-										$o = TextFormat::RED . "§5The Flag named: §6$flag §5annot found. §6(Flags: edit, god, pvp, flight, touch, effects, msg, passage, perms, drop, tnt)";
+										$o = TextFormat::RED . "§5The Flag named: §6$flag §5annot found. §6(Flags: edit, god, pvp, flight, touch, effects, msg, passage, perms, drop, tnt, nofalldamage, mobspawning)";
 									}
 								}else{
-									$o = TextFormat::RED . "§5Please specify a flag. §6(Flags: edit, god, pvp, flight, touch, effects, msg, passage, perms, drop, tnt)";
+									$o = TextFormat::RED . "§5Please specify a flag. §6(Flags: edit, god, pvp, flight, touch, effects, msg, passage, perms, drop, tnt, nofalldamage, mobspawning)";
 								}
 							}
 						}else{
@@ -1816,6 +1834,42 @@ class Main extends PluginBase implements Listener{
 				$event->setCancelled(true);
 			}
 		}
+	}
+	public function onMobSpawn(EntitySpawnEvent $event){
+        if (!$this->canSpawn($event->getPosition(), $event->getEntity()->getLevel())) {
+            $event->setCancelled();
+        }
+    }
+	/** on Drop
+	 * @param Player   $player
+	 * @param Position $position
+	 * @return bool
+	 */
+	public function canSpawn(Player $player, Position $position) : bool{
+		if($player->isOp()) {
+			return true;
+		}
+		$o = true;
+		$g = (isset($this->levels[$position->getLevel()->getName()]) ? $this->levels[$position->getLevel()->getName()]["MobSpawning"] : $this->mobspawning);
+		if($g){
+			$o = false;
+		}
+		foreach($this->areas as $area){
+			if($area->contains($position, $position->getLevel()->getName())){
+				if($area->getFlag("mobspawning")){
+					$o = false;
+				}
+				if($area->isWhitelisted(strtolower($player->getName()))){
+					$o = true;
+					break;
+				}
+				if(!$area->getFlag("mobspawning") && $g){
+					$o = true;
+					break;
+				}
+			}
+		}
+		return $o;
 	}
 /**  Festival Console Sign Flag for developers
      *   makes it easy to find Festival console output fast
