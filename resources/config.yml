@@ -54,6 +54,9 @@ Default:
   # Keep players from taking fall damage
   NoFallDamage: false
   
+  # Keep players from spawning mob
+  MobSpawning: true
+  
 # Settings for unprotected areas in individual worlds:
 Worlds:
  
@@ -98,6 +101,9 @@ Worlds:
     # Keep players from taking fall damage
     NoFallDamage: false
   
+    # Keep players from spawning mob
+    MobSpawning: true
+	
   world:
   
     # Keep players from getting hurt? 
@@ -138,3 +144,6 @@ Worlds:
     
     # Keep players from taking fall damage
     NoFallDamage: false
+	
+	# Keep players from spawning mob
+   MobSpawning: true
