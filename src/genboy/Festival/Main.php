@@ -1896,18 +1896,6 @@ class Main extends PluginBase implements Listener{
                     }
                     if( $area->getFlag("falldamage") ){
                         $falldamage = true;
-                    }
-                }
-            }
-        }else{
-            $fly = false; // flag default
-        }
-        // ! if( $player->isOp() ){
-        if( $player->hasPermission("festival") || $player->hasPermission("festival.access") ){
-            $fly = true;
-            $player->setAllowFlight(true);
-            return $fly;
-        }
 
         $msg = '';
         if( !$fly && $player->isFlying() ){
